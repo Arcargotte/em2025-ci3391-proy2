@@ -9,16 +9,28 @@ proy2_tables.sql.
 */
 
 ALTER TABLE solicitud
-ADD CONSTRAINT CHECK;
+
+ADD CONSTRAINT chk_numero_de_tramite CHECK numero_de_tramite LIKE '^[0-9]{6}$',
+ADD CONSTRAINT chk_numero_de_referencia CHECK numero_de_referencia LIKE '^[0-9]{6}$',
 
 ALTER TABLE persona_natural
-ADD CONSTRAINT CHECK;
+ADD CONSTRAINT correo_electronico CHECK correo_electronico LIKE '%@%.%',
 
 ALTER TABLE persona_juridica
-ADD CONSTRAINT CHECK;
+ADD CONSTRAINT chk_persona_juridica_tipo CHECK(
+    tipo ILIKE 'PÚBLICO' OR
+    tipo ILIKE 'PUBLICO' OR
+    tipo ILIKE 'PRIVADO' OR
+    tipo ILIKE 'ASOCIACIÓN DE PROPIEDAD COLECTIVA' OR
+    tipo ILIKE 'ASOCIACION DE PROPIEDAD COLECTIVA' OR
+);
 
-ALTER TABLE publica
-ADD CONSTRAINT CHECK;
+/*
+A PESAR DE QUE EN EL ESQUEMA DE BASE DE DATOS RESTRINGIMOS
+LOS VALORES DE LOS ATRIBUTOS TIPO EN PUBLICO, TENEMOS LA LIMITACION
+DE QUE EN EL ARCHIVO EXCEL ESTE ATRIBUTO NO PUEDE SER NULO
+*/
+ALTER TABLE publica;
 
 ALTER TABLE asociacion_de_propiedad_colectiva
 ADD CONSTRAINT CHECK;
