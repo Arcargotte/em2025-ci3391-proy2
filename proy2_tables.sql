@@ -22,211 +22,171 @@ SET ROLE proy2;
 /*
 Son creadas las tablas especificadas según el esquema de la base de datos.
 */
+
+--Crea secuencia de identificadores para personas naturales en caso
+--de que no sea insertado un solicitante con su documento de identificación
+CREATE SEQUENCE persona_natural_cdi_seq;
+
+/*
+Agregar restriccion de que no se puede asociar una solicitud a un solicitante si no tiene una llave foranea hacia
+una persona natural o juridica
+*/
+
+/*
+Agregar restriccion de que un apoderado siempre debe hacer referencia a una persona natural
+*/
+
+/*
+ESCRIBIR EN EL INFORME EL CAMBIO DEL ESQUEMA A UNA RELACION RECURSIVA ENTRE PERSONA
+NATURAL Y APODERADO DEBIDO A LIMITACIONES LOGICAS
+*/
+
+
+/*
+AGREGAR RESTRICCION DE QUE SOLO UNA MARCA PUEDE APUNTAR A UN MISMO SIGNO DISTINTIVO
+*/
+
+CREATE TABLE signo_distintivo(
+    id_sd BIGSERIAL,
+    tipo VARCHAR(100),
+    --TIPO MIXTO/ DENOMINATIVO
+    nombre VARCHAR(100),
+    imagen_correspondiente TEXT,
+    --TIPO GRAFICO
+    descripcion VARCHAR(100),
+    CONSTRAINT pk_id PRIMARY KEY (id_sd)
+);
+
+CREATE TABLE marca (
+    id_marca bigserial,
+    tipo VARCHAR(100) NOT NULL,
+    clase INTEGER NOT NULL,
+    CONSTRAINT pk_marca PRIMARY KEY (id_marca),
+    fk_sd INTEGER REFERENCES signo_distintivo(id_sd)
+);
+
+/*
+TAREA: VERIFICAR QUE LEMA COMERCIAL APUNTE A SOLO UNA MARCA
+*/
+CREATE TABLE lema_comercial (
+    numero_de_la_solicitud VARCHAR(100) NOT NULL,
+    aplicar_a_la_marca VARCHAR(100) NOT NULL,
+    fk_marca INTEGER REFERENCES marca (id_marca),
+    CONSTRAINT pk_lc PRIMARY KEY (fk_marca)
+);
+
+/*
+NECESITA RESTRICCION DE NOT NULL EN FUNCION DEL TIPO DE SIGNO_DISTINTIVO
+*/
+
+/*
+Verificar que solicitud apunte a un solicitante que tiene.
+Agregar en el reporte que se tuvo que agregar el atributo PAIS
+a la solicitud
+*/
+
+
+CREATE TABLE pais (
+    nombre VARCHAR(100),
+    CONSTRAINT pk_pais PRIMARY KEY (nombre)
+);
+
+CREATE TABLE prioridad_extranjera (
+    numero_de_prioridad VARCHAR(100) NOT NULL,
+    fecha_de_prioridad DATE NOT NULL,
+    fk_pais CHAR(11) NOT NULL REFERENCES pais (nombre),
+    PRIMARY KEY (numero_de_prioridad, fk_pais)
+);
+
+/*
+AGREGAR CONSTRAING DE QUE LA REFERENCIA A LA MARCA DEBE SER UNICA
+AGREGAR CONSTRAINT DE QUE LA REFERENCIA AL SOLICITANTE DEBE SER NO NULA
+*/
+
+/*
+LA LLAVE FORANEA SOLICITANTE_NATURAL DEBE SER IMPLEMENTADA UNA VEZ CREADA LA TABLA SOLICITANTE
+*/
+
+CREATE TABLE persona_natural(
+    nombre VARCHAR(100) NOT NULL,
+    documento_de_identificacion VARCHAR(100) DEFAULT CONCAT('VACIO', nextval('persona_natural_cdi_seq')),
+    CONSTRAINT pk_persona_natural PRIMARY KEY (documento_de_identificacion),
+    
+    es_apoderado BOOLEAN NOT NULL,
+    fk_poderdante VARCHAR(100) REFERENCES persona_natural (documento_de_identificacion),
+    numero_de_agente INTEGER,
+    numero_de_poder VARCHAR(100),
+    fecha_de_presentacion DATE,
+    correlativo INTEGER,
+    fk_persona_natural VARCHAR(100) REFERENCES persona_natural (documento_de_identificacion)
+);
+
+
+/*
+COLOCAR RESTRICCION DE QUE REPRESENTANTE LEGAL APODERADO NO DEBE SER NULO Y APUNTA A
+UNA PERSONA NATURAL QUE ES APODERADO
+*/
+CREATE TABLE solicitante(
+    id_solicitante BIGSERIAL,
+    domicilio TEXT NOT NULL,
+    correo_electronico VARCHAR(320) NOT NULL,
+    fax CHAR(12),
+    celular CHAR(12) NOT NULL,
+    telefono CHAR(12) NOT NULL,
+
+    fk_representante_legal_apoderado VARCHAR(100) NOT NULL 
+    REFERENCES persona_natural (documento_de_identificacion),
+    fk_nacionalidad VARCHAR(100) REFERENCES pais (nombre),
+    CONSTRAINT pk_solicitante PRIMARY KEY (id_solicitante)
+);
+
+--Crea secuencia de identificadores para personas naturales en caso
+--de que no sea insertado un solicitante con su documento de identificación
+CREATE SEQUENCE persona_juridica_cdi_seq;
+
+CREATE SEQUENCE no_def_publica_seq;
+
+/*
+AGREGAR RESTRICCION DE TIPO_EMPRESA EN FUNCION DE TIPO_JURIDICO
+*/
+
+CREATE TABLE persona_juridica(
+    rif CHAR(12) DEFAULT CONCAT('VACIO', nextval('persona_juridica_cdi_seq')),
+    tipo_juridico VARCHAR(33) NOT NULL,
+    razon_social VARCHAR(255) NOT NULL,
+    fk_solicitante INTEGER REFERENCES solicitante (id_solicitante),
+    PRIMARY KEY (rif, fk_solicitante),
+
+    tipo_empresa VARCHAR(100) DEFAULT CONCAT('NODEF', nextval('no_def_publica_seq'))
+);
+
 CREATE TABLE solicitud (
     numero_de_solicitud CHAR(11) NOT NULL,
     numero_de_tramite CHAR(6) NOT NULL,
     numero_de_referencia CHAR(6) NOT NULL,
     fecha_solicitud DATE NOT NULL,
     taquilla_SAPI INTEGER NOT NULL,
-    condicion INTEGER NOT NULL,
+    condicion VARCHAR(100) NOT NULL DEFAULT 'EN PROCESO',
     firma TEXT,
-    CONSTRAINT solicitud_key PRIMARY KEY (numero_de_solicitud)
+    prioridad_extranjera VARCHAR(100),
+    pais VARCHAR(100),
+    CONSTRAINT solicitud_key PRIMARY KEY (numero_de_solicitud),
+    CONSTRAINT fk_prioridad_extranjera FOREIGN KEY (prioridad_extranjera, pais)
+        REFERENCES prioridad_extranjera (numero_de_prioridad, fk_pais),
+    
+    fk_marca INTEGER NOT NULL REFERENCES marca (id_marca),
+    fk_solicitante INTEGER NOT NULL REFERENCES solicitante (id_solicitante)
 );
 
-COMMENT ON TABLE solicitud IS '';
-COMMENT ON COLUMN solicitud.numero_de_solicitud IS '';
-COMMENT ON COLUMN solicitud.numero_de_tramite IS '';
-COMMENT ON COLUMN solicitud.fecha_solicitud IS '';
-COMMENT ON COLUMN solicitud.taquilla_SAPI IS '';
-COMMENT ON COLUMN solicitud.condicion IS '';
-COMMENT ON COLUMN solicitud.firma IS '';
-
---Crea secuencia de identificadores para personas naturales en caso
---de que no sea insertado un solicitante con su documento de identificación
-CREATE SEQUENCE persona_natural_cdi_seq;
-
-CREATE TABLE persona_natural(
-    tipo VARCHAR(8) NOT NULL,
-    domicilio TEXT NOT NULL,
-    correo_electronico VARCHAR(320) NOT NULL,
-    fax CHAR(12),
-    celular CHAR(12) NOT NULL,
-    telefono CHAR(12) NOT NULL,
-    nombre VARCHAR(100) NOT NULL,
-    documento_de_identificacion VARCHAR(100) DEFAULT CONCAT('VACIO', nextval('persona_natural_cdi_seq')),
-    CONSTRAINT persona_natural_key PRIMARY KEY (documento_de_identificacion)
-);
-
-COMMENT ON TABLE persona_natural IS '';
-COMMENT ON COLUMN persona_natural.tipo IS '';
-COMMENT ON COLUMN persona_natural.domicilio IS '';
-COMMENT ON COLUMN persona_natural.correo_electronico IS '';
-COMMENT ON COLUMN persona_natural.fax IS '';
-COMMENT ON COLUMN persona_natural.celular IS '';
-COMMENT ON COLUMN persona_natural.telefono IS '';
-COMMENT ON COLUMN persona_natural.nombre IS '';
-COMMENT ON COLUMN persona_natural.documento_de_identificacion IS '';
-
---Crea secuencia de identificadores para personas naturales en caso
---de que no sea insertado un solicitante con su documento de identificación
-CREATE SEQUENCE persona_juridica_cdi_seq;
-
-CREATE TABLE persona_juridica(
-    tipo VARCHAR(8) NOT NULL,
-    domicilio TEXT NOT NULL,
-    correo_electronico VARCHAR(320) NOT NULL,
-    fax CHAR(12),
-    celular CHAR(12) NOT NULL,
-    telefono CHAR(12) NOT NULL,
-    rif CHAR(12) DEFAULT CONCAT('VACIO', nextval('persona_juridica_cdi_seq')),
-    tipo_juridico VARCHAR(33) NOT NULL,
-    razon_social VARCHAR(255) NOT NULL,
-    CONSTRAINT persona_juridica_key PRIMARY KEY (rif)
-);
-
-COMMENT ON TABLE persona_juridica IS '';
-COMMENT ON COLUMN persona_juridica.tipo IS '';
-COMMENT ON COLUMN persona_juridica.domicilio IS '';
-COMMENT ON COLUMN persona_juridica.correo_electronico IS '';
-COMMENT ON COLUMN persona_juridica.fax IS '';
-COMMENT ON COLUMN persona_juridica.celular IS '';
-COMMENT ON COLUMN persona_juridica.telefono IS '';
-COMMENT ON COLUMN persona_juridica.rif IS '';
-COMMENT ON COLUMN persona_juridica.tipo_juridico IS '';
-COMMENT ON COLUMN persona_juridica.razon_social IS '';
-
-CREATE SEQUENCE no_def_publica_seq;
-
-CREATE TABLE publica (
-    tipo VARCHAR(17) DEFAULT CONCAT('NODEF', nextval('no_def_publica_seq')),
-    id_publica CHAR(12) REFERENCES persona_juridica (rif),
-    CONSTRAINT publica_key PRIMARY KEY (id_publica)
-);
-
-COMMENT ON TABLE publica IS '';
-COMMENT ON COLUMN publica.tipo IS '';
-COMMENT ON COLUMN publica.id_publica IS '';
-
-CREATE TABLE asociacion_de_propiedad_colectiva (
-    tipo VARCHAR(44) DEFAULT CONCAT('NODEF', nextval('no_def_publica_seq')),
-    id_apc CHAR(12) REFERENCES persona_juridica (rif),
-    CONSTRAINT apc_key PRIMARY KEY (id_apc)
-);
-
-COMMENT ON TABLE asociacion_de_propiedad_colectiva IS '';
-COMMENT ON COLUMN asociacion_de_propiedad_colectiva.tipo IS '';
-COMMENT ON COLUMN asociacion_de_propiedad_colectiva.id_apc IS '';
-
-CREATE TABLE privada (
-    tipo VARCHAR(10) DEFAULT CONCAT('NODEF', nextval('no_def_publica_seq')),
-    id_privada CHAR(12) REFERENCES persona_juridica (rif),
-    CONSTRAINT privada_key PRIMARY KEY (id_privada)
-);
-
-COMMENT ON TABLE privada IS '';
-COMMENT ON COLUMN privada.tipo IS '';
-COMMENT ON COLUMN privada.id_privada IS '';
-
-CREATE TABLE apoderado (
-    es_apoderado BOOLEAN NOT NULL,
-    numero_de_agente INTEGER,
-    numero_de_poder VARCHAR(100),
-    fecha_de_presentacion DATE,
-    correlativo INTEGER,
-    id_apoderado VARCHAR(100) REFERENCES persona_natural (documento_de_identificacion),
-    CONSTRAINT apoderado_key PRIMARY KEY (id_apoderado)
-);
-
-COMMENT ON TABLE apoderado IS '';
-COMMENT ON COLUMN apoderado.es_apoderado IS '';
-COMMENT ON COLUMN apoderado.numero_de_agente IS '';
-COMMENT ON COLUMN apoderado.numero_de_poder IS '';
-COMMENT ON COLUMN apoderado.fecha_de_presentacion IS '';
-COMMENT ON COLUMN apoderado.correlativo IS '';
-
-CREATE TABLE prioridad_extranjera (
-    numero_de_prioridad INTEGER,
-    fecha_de_prioridad DATE NOT NULL,
-    fk_solicitud CHAR(11) REFERENCES solicitud (numero_de_solicitud),
-    PRIMARY KEY (numero_de_prioridad, fk_solicitud)
-);
-
-COMMENT ON TABLE prioridad_extranjera IS '';
-COMMENT ON COLUMN prioridad_extranjera.numero_de_prioridad IS '';
-COMMENT ON COLUMN prioridad_extranjera.fecha_de_prioridad IS '';
-
-CREATE TABLE pais (
-    nombre VARCHAR(100),
-    CONSTRAINT pais_key PRIMARY KEY (nombre)
-);
-
-COMMENT ON TABLE pais IS '';
-COMMENT ON COLUMN pais.nombre IS '';
 
 CREATE TABLE recaudos (
     id_recaudo BIGSERIAL,
     nombre VARCHAR(100) NOT NULL,
-    CONSTRAINT recaudos_key PRIMARY KEY (id_recaudo)
+    CONSTRAINT pk_recaudo PRIMARY KEY (id_recaudo)
 );
 
-COMMENT ON TABLE recaudos IS '';
-COMMENT ON COLUMN recaudos.id_recaudo IS '';
-COMMENT ON COLUMN recaudos.nombre IS '';
 
-CREATE TABLE marca (
-    id_marca bigserial,
-    tipo VARCHAR(100) NOT NULL,
-    clase INTEGER NOT NULL,
-    CONSTRAINT marca_key PRIMARY KEY (id_marca)
+CREATE TABLE recaudos_solicitud(
+    fk_solicitud CHAR (11) REFERENCES solicitud(numero_de_solicitud),
+    fk_recaudo INTEGER REFERENCES recaudos(id_recaudo)
 );
-
-COMMENT ON TABLE marca IS '';
-COMMENT ON COLUMN marca.id_marca IS '';
-COMMENT ON COLUMN marca.tipo IS '';
-COMMENT ON COLUMN marca.clase IS '';
-
-CREATE TABLE lema_comercial (
-    numero_de_la_solicitud VARCHAR(100) NOT NULL,
-    aplicar_a_la_marca VARCHAR(100) NOT NULL,
-    marca_id INTEGER REFERENCES marca (id_marca),
-    CONSTRAINT lema_comercial_key PRIMARY KEY (marca_id)
-);
-
-COMMENT ON TABLE lema_comercial IS '';
-COMMENT ON COLUMN lema_comercial.numero_de_la_solicitud IS '';
-COMMENT ON COLUMN lema_comercial.aplicar_a_la_marca IS '';
-COMMENT ON COLUMN lema_comercial.marca_id IS '';
-
-CREATE TABLE mixto(
-    tipo VARCHAR(100) NOT NULL,
-    descripcion VARCHAR(100),
-    imagen_correspondiente TEXT NOT NULL,
-    CONSTRAINT mixto_key PRIMARY KEY (descripcion)
-);
-
-COMMENT ON TABLE mixto IS '';
-COMMENT ON COLUMN mixto.tipo IS '';
-COMMENT ON COLUMN mixto.descripcion IS '';
-COMMENT ON COLUMN mixto.imagen_correspondiente IS '';
-
-CREATE TABLE denominativo(
-    tipo VARCHAR(100) NOT NULL,
-    nombre VARCHAR(100),
-    CONSTRAINT denominativo_key PRIMARY KEY (nombre)
-);
-
-COMMENT ON TABLE denominativo IS '';
-COMMENT ON COLUMN denominativo.tipo IS '';
-COMMENT ON COLUMN denominativo.nombre IS '';
-
-CREATE TABLE grafico(
-    tipo VARCHAR(100) NOT NULL,
-    descripcion VARCHAR(100),
-    imagen_correspondiente TEXT NOT NULL,
-    CONSTRAINT grafico_key PRIMARY KEY (descripcion)
-);
-
-COMMENT ON TABLE grafico IS '';
-COMMENT ON COLUMN grafico.tipo IS '';
-COMMENT ON COLUMN grafico.descripcion IS '';
-COMMENT ON COLUMN grafico.imagen_correspondiente IS '';
