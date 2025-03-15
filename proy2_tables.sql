@@ -120,9 +120,7 @@ CREATE TABLE persona_natural(
     fecha_de_presentacion DATE,
     correlativo INTEGER,
 
-    CONSTRAINT pk_persona_natural PRIMARY KEY (documento_de_identificacion),
-    CONSTRAINT fk_poderdante FOREIGN KEY (fk_poderdante) 
-        REFERENCES persona_natural (documento_de_identificacion)
+    CONSTRAINT pk_persona_natural PRIMARY KEY (documento_de_identificacion)
 );
 
 
@@ -186,3 +184,9 @@ CREATE TABLE recaudos (
     nombre VARCHAR(100) NOT NULL,
     CONSTRAINT pk_recaudo PRIMARY KEY (id_recaudo)
 );
+
+CREATE TABLE recaudos_solicitud(
+    fk_recaudo INTEGER REFERENCES recaudos (id_recaudo),
+    fk_solicitud CHAR(11) REFERENCES solicitud (numero_de_solicitud),
+    CONSTRAINT pk_recaudos_solicitud PRIMARY KEY (fk_recaudo, fk_solicitud)
+)
