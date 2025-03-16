@@ -23,52 +23,26 @@ SET ROLE proy2;
 Son creadas las tablas especificadas según el esquema de la base de datos.
 */
 
-/*
-Agregar restriccion de que un apoderado siempre debe hacer referencia a una persona natural
-*/
-
-/*
-ESCRIBIR EN EL INFORME EL CAMBIO DEL ESQUEMA A UNA RELACION RECURSIVA ENTRE PERSONA
-NATURAL Y APODERADO DEBIDO A LIMITACIONES LOGICAS
-*/
-
-
-/*
-AGREGAR RESTRICCION DE QUE SOLO UNA MARCA PUEDE APUNTAR A UN MISMO SIGNO DISTINTIVO
-*/
-
 CREATE TABLE marca (
-    id_marca bigserial,
-    tipo VARCHAR(100),
+    id_marca bigserial PRIMARY KEY,
     clase INTEGER NOT NULL,
     distingue TEXT,
-
-    CONSTRAINT pk_marca PRIMARY KEY (id_marca)
+    tipo VARCHAR(100),
+    --ATRIBUTOS DE LEMA COMERCIAL
+    numero_de_la_solicitud VARCHAR(100),
+    aplicar_a_la_marca VARCHAR(100)
 );
 CREATE TABLE signo_distintivo(
-    id_sd BIGSERIAL,
+    id_sd BIGSERIAL PRIMARY KEY,
     marca INTEGER NOT NULL,
     tipo VARCHAR(100),
     --TIPO MIXTO/ DENOMINATIVO
     nombre VARCHAR(100),
     imagen_correspondiente TEXT,
     --TIPO GRAFICO
-    descripción TEXT,
-    CONSTRAINT pk_id PRIMARY KEY (id_sd),
-    CONSTRAINT fk_sd FOREIGN KEY (marca) REFERENCES marca(id_marca)
+    descripción TEXT
 );
 
-/*
-TAREA: VERIFICAR QUE LEMA COMERCIAL APUNTE A SOLO UNA MARCA
-*/
-CREATE TABLE lema_comercial (
-    numero_de_la_solicitud VARCHAR(100) NOT NULL,
-    aplicar_a_la_marca VARCHAR(100) NOT NULL,
-    marca INTEGER,
-
-    CONSTRAINT fk_marca FOREIGN KEY (marca) REFERENCES marca (id_marca),
-    CONSTRAINT pk_lc PRIMARY KEY (marca)
-);
 
 /*
 NECESITA RESTRICCION DE NOT NULL EN FUNCION DEL TIPO DE SIGNO_DISTINTIVO
@@ -82,18 +56,13 @@ a la solicitud
 
 
 CREATE TABLE país (
-    nombre VARCHAR(100),
-
-    CONSTRAINT pk_pais PRIMARY KEY (nombre)
+    nombre VARCHAR(100) PRIMARY KEY
 );
 
 CREATE TABLE prioridad_extranjera (
-    número_de_prioridad VARCHAR(100) NOT NULL,
+    número_de_prioridad VARCHAR(100) PRIMARY KEY,
     fecha_de_prioridad DATE NOT NULL,
-    país VARCHAR(100) NOT NULL,
-
-    CONSTRAINT fk_país FOREIGN KEY (país) REFERENCES país (nombre),
-    CONSTRAINT pk_prioridad_extranjera PRIMARY KEY (número_de_prioridad)
+    país VARCHAR(100) NOT NULL
 );
 
 /*
@@ -111,13 +80,11 @@ LA LLAVE FORANEA SOLICITANTE_NATURAL DEBE SER IMPLEMENTADA UNA VEZ CREADA LA TAB
 
 CREATE TABLE persona_natural(
     nombre VARCHAR(100) NOT NULL,
-    documento_de_identificación VARCHAR(100) DEFAULT CONCAT('VACIO', nextval('id_seq')),    
-
-    CONSTRAINT pk_persona_natural PRIMARY KEY (documento_de_identificación)
+    documento_de_identificación VARCHAR(100) PRIMARY KEY DEFAULT CONCAT('VACIO', nextval('id_seq'))    
 );
 
 CREATE TABLE apoderado(
-    número_de_agente VARCHAR(100),
+    número_de_agente VARCHAR(100) PRIMARY KEY,
     número_de_poder VARCHAR(100),
     nombre VARCHAR(100) NOT NULL,
     documento_de_identificación VARCHAR(100) DEFAULT CONCAT('VACIO', nextval('id_seq')),
@@ -127,9 +94,7 @@ CREATE TABLE apoderado(
     celular CHAR(12),
     teléfono CHAR(12),
     país_de_nacionalidad VARCHAR(100),
-    país_de_domicilio VARCHAR(100),
-
-    CONSTRAINT pk_apoderado PRIMARY KEY (número_de_agente)
+    país_de_domicilio VARCHAR(100)
 );
 
 /*
@@ -137,7 +102,7 @@ COLOCAR RESTRICCION DE QUE REPRESENTANTE LEGAL APODERADO NO DEBE SER NULO Y APUN
 UNA PERSONA NATURAL QUE ES APODERADO
 */
 CREATE TABLE solicitante(
-    id_solicitante BIGSERIAL,
+    id_solicitante BIGSERIAL PRIMARY KEY,
     tipo VARCHAR(100),
     documento_de_identificación VARCHAR(100) DEFAULT CONCAT('VACIO', nextval('id_seq')),
     domicilio TEXT,
@@ -147,9 +112,7 @@ CREATE TABLE solicitante(
     teléfono VARCHAR(100),
     num_agente VARCHAR(100),
     país_de_nacionalidad VARCHAR(100),
-    país_de_domicilio VARCHAR(100),
-
-    CONSTRAINT pk_solicitante PRIMARY KEY (id_solicitante)
+    país_de_domicilio VARCHAR(100)
 );
 
 
@@ -158,18 +121,15 @@ AGREGAR RESTRICCION DE TIPO_EMPRESA EN FUNCION DE TIPO_JURIDICO
 */
 
 CREATE TABLE persona_jurídica(
-    rif CHAR(12) DEFAULT CONCAT('VACIO', nextval('id_seq')),
+    rif CHAR(12) PRIMARY KEY DEFAULT CONCAT('VACIO', nextval('id_seq')),
     razón_social VARCHAR(255) NOT NULL,
     tipo_jurídico VARCHAR(33) DEFAULT CONCAT('VACIO', nextval('id_seq')),
     tipo_empresa VARCHAR(100) DEFAULT CONCAT('VACIO', nextval('id_seq')),
-    solicitante INTEGER,
-    
-    CONSTRAINT fk_solicitante FOREIGN KEY (solicitante) REFERENCES solicitante (id_solicitante),
-    PRIMARY KEY (rif, solicitante)
+    solicitante INTEGER
 );
 
 CREATE TABLE solicitud (
-    número_de_solicitud CHAR(11) NOT NULL,
+    número_de_solicitud CHAR(11) PRIMARY KEY,
     número_de_trámite CHAR(6),
     número_de_referencia CHAR(6),
     fecha_solicitud DATE NOT NULL,
@@ -177,26 +137,14 @@ CREATE TABLE solicitud (
     condición VARCHAR(100) NOT NULL DEFAULT 'en proceso',
     firma TEXT DEFAULT NULL,
     prioridad_extranjera VARCHAR(100),
-    marca INTEGER NOT NULL,
-
-    CONSTRAINT pk_solicitud PRIMARY KEY (número_de_solicitud)
+    marca INTEGER NOT NULL
 );
 
-CREATE TABLE solicitud_solicitante (
-    fk_solicitud CHAR(11) REFERENCES solicitud (número_de_solicitud),
-    fk_solicitante INTEGER REFERENCES solicitante (id_solicitante),
-
-    CONSTRAINT pk_solicitud_solicitante PRIMARY KEY (fk_solicitud, fk_solicitante)
-);
+CREATE TABLE solicitud_solicitante ();
 
 CREATE TABLE recaudos (
-    id_recaudo BIGSERIAL,
-    nombre VARCHAR(100) NOT NULL,
-    CONSTRAINT pk_recaudo PRIMARY KEY (id_recaudo)
+    id_recaudo BIGSERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE recaudos_solicitud(
-    recaudo INTEGER REFERENCES recaudos (id_recaudo),
-    solicitud CHAR(11) REFERENCES solicitud (número_de_solicitud),
-    CONSTRAINT pk_recaudos_solicitud PRIMARY KEY (recaudo, solicitud)
-)
+CREATE TABLE recaudos_solicitud();

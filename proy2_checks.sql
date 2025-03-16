@@ -8,6 +8,10 @@ definidas en el esquema de la base de datos e implementadas en el script
 proy2_tables.sql.
 */
 
+
+ALTER TABLE prioridad_extranjera
+ADD CONSTRAINT fk_país FOREIGN KEY (país) REFERENCES país (nombre);
+
 ALTER TABLE solicitud
 ADD CONSTRAINT chk_numero_de_tramite CHECK (número_de_trámite ~ '^[0-9]{6}$'),
 ADD CONSTRAINT chk_numero_de_referencia CHECK (número_de_referencia ~ '^[0-9]{6}$'),
@@ -84,7 +88,14 @@ ADD CONSTRAINT chk_tipo_empresa CHECK(
         'conglomerado',
         'grupo de intercambio solidario') OR
     tipo_empresa ~ '^VACIO*'
-);
+),
+ADD CONSTRAINT fk_solicitante FOREIGN KEY (solicitante) REFERENCES solicitante (id_solicitante);
+
+ALTER TABLE solicitud_solicitante
+ADD COLUMN fk_solicitud CHAR(11) REFERENCES solicitud (número_de_solicitud),
+ADD COLUMN fk_solicitante INTEGER REFERENCES solicitante (id_solicitante),
+ADD CONSTRAINT pk_solicitud_solicitante PRIMARY KEY (fk_solicitud, fk_solicitante);
+
 
 /*
 A PESAR DE QUE EN EL ESQUEMA DE BASE DE DATOS RESTRINGIMOS
@@ -98,12 +109,21 @@ ADD CONSTRAINT chk_tipo_marca CHECK (
 ),
 ADD CONSTRAINT chk_clase_internacional CHECK (
     clase >= 0 OR clase <= 47
+),
+ADD CONSTRAINT chk_lema_comercial CHECK(
+    numero_de_la_solicitud is NULL OR aplicar_a_la_marca is NULL OR tipo != 'LC' --Verifica que si el tipo de marca no es LC, entonces el numero de solicitud y aplicar a la marca son NULL
 );
 
 ALTER TABLE signo_distintivo
 ADD CONSTRAINT chk_tipo_sd CHECK (tipo IN ('denominativa', 'mixta', 'grafica')),
-ADD CONSTRAINT marca_sd_unique UNIQUE (id_sd, marca);
+ADD CONSTRAINT marca_sd_unique UNIQUE (id_sd, marca),
+ADD CONSTRAINT chk_sd_denominativo CHECK(
+    imagen_correspondiente is NULL OR descripción is NULL OR tipo != 'denominativo' --Verifica que si el signo distintivo es denominativo, entonces atributos descripción e imagen son NULL
+),
+ADD CONSTRAINT fk_sd FOREIGN KEY (marca) REFERENCES marca(id_marca)
+;
 
 ALTER TABLE recaudos_solicitud
-ADD CONSTRAINT fk_solicitud FOREIGN KEY (solicitud) REFERENCES solicitud (número_de_solicitud),
-ADD CONSTRAINT fk_recaudo FOREIGN KEY (recaudo) REFERENCES recaudos (id_recaudo);
+ADD COLUMN recaudo INTEGER REFERENCES recaudos (id_recaudo),
+ADD COLUMN solicitud CHAR(11) REFERENCES solicitud (número_de_solicitud),
+ADD CONSTRAINT pk_recaudos_solicitud PRIMARY KEY (recaudo, solicitud);
