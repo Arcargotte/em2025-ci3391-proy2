@@ -37,25 +37,25 @@ NATURAL Y APODERADO DEBIDO A LIMITACIONES LOGICAS
 AGREGAR RESTRICCION DE QUE SOLO UNA MARCA PUEDE APUNTAR A UN MISMO SIGNO DISTINTIVO
 */
 
+CREATE TABLE marca (
+    id_marca bigserial,
+    tipo VARCHAR(100),
+    clase INTEGER NOT NULL,
+    distingue TEXT,
+
+    CONSTRAINT pk_marca PRIMARY KEY (id_marca)
+);
 CREATE TABLE signo_distintivo(
     id_sd BIGSERIAL,
+    marca INTEGER NOT NULL,
     tipo VARCHAR(100),
     --TIPO MIXTO/ DENOMINATIVO
     nombre VARCHAR(100),
     imagen_correspondiente TEXT,
     --TIPO GRAFICO
-    descripción VARCHAR(100),
-    CONSTRAINT pk_id PRIMARY KEY (id_sd)
-);
-
-CREATE TABLE marca (
-    id_marca bigserial,
-    tipo VARCHAR(100) NOT NULL,
-    clase INTEGER NOT NULL,
-    signo_distintivo INTEGER NOT NULL,
-
-    CONSTRAINT pk_marca PRIMARY KEY (id_marca),
-    CONSTRAINT fk_sd FOREIGN KEY (signo_distintivo) REFERENCES signo_distintivo(id_sd)
+    descripción TEXT,
+    CONSTRAINT pk_id PRIMARY KEY (id_sd),
+    CONSTRAINT fk_sd FOREIGN KEY (marca) REFERENCES marca(id_marca)
 );
 
 /*
@@ -93,7 +93,7 @@ CREATE TABLE prioridad_extranjera (
     país VARCHAR(100) NOT NULL,
 
     CONSTRAINT fk_país FOREIGN KEY (país) REFERENCES país (nombre),
-    PRIMARY KEY (número_de_prioridad, país)
+    CONSTRAINT pk_prioridad_extranjera PRIMARY KEY (número_de_prioridad)
 );
 
 /*
@@ -170,20 +170,24 @@ CREATE TABLE persona_jurídica(
 
 CREATE TABLE solicitud (
     número_de_solicitud CHAR(11) NOT NULL,
-    número_de_trámite CHAR(6) NOT NULL,
-    número_de_referencia CHAR(6) NOT NULL,
+    número_de_trámite CHAR(6),
+    número_de_referencia CHAR(6),
     fecha_solicitud DATE NOT NULL,
-    taquilla_SAPI INTEGER NOT NULL,
+    taquilla_SAPI INTEGER,
     condición VARCHAR(100) NOT NULL DEFAULT 'en proceso',
-    firma TEXT,
+    firma TEXT DEFAULT NULL,
     prioridad_extranjera VARCHAR(100),
-    país VARCHAR(100),
     marca INTEGER NOT NULL,
-    solicitante INTEGER NOT NULL,
 
     CONSTRAINT pk_solicitud PRIMARY KEY (número_de_solicitud)
 );
 
+CREATE TABLE solicitud_solicitante (
+    fk_solicitud CHAR(11) REFERENCES solicitud (número_de_solicitud),
+    fk_solicitante INTEGER REFERENCES solicitante (id_solicitante),
+
+    CONSTRAINT pk_solicitud_solicitante PRIMARY KEY (fk_solicitud, fk_solicitante)
+);
 
 CREATE TABLE recaudos (
     id_recaudo BIGSERIAL,

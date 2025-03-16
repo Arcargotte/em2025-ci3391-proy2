@@ -12,11 +12,9 @@ ALTER TABLE solicitud
 ADD CONSTRAINT chk_numero_de_tramite CHECK (número_de_trámite ~ '^[0-9]{6}$'),
 ADD CONSTRAINT chk_numero_de_referencia CHECK (número_de_referencia ~ '^[0-9]{6}$'),
 ADD CONSTRAINT chk_condicion CHECK (condición IN ('en proceso', 'rechazada', 'aprobada')),
-ADD CONSTRAINT fk_prioridad_extranjera FOREIGN KEY (prioridad_extranjera, país)
-    REFERENCES prioridad_extranjera (número_de_prioridad, país),
-
-ADD CONSTRAINT fk_marca FOREIGN KEY (marca) REFERENCES marca (id_marca),
-ADD CONSTRAINT fk_solicitante FOREIGN KEY (solicitante) REFERENCES solicitante (id_solicitante);
+ADD CONSTRAINT fk_prioridad_extranjera FOREIGN KEY (prioridad_extranjera)
+    REFERENCES prioridad_extranjera (número_de_prioridad),
+ADD CONSTRAINT fk_marca FOREIGN KEY (marca) REFERENCES marca (id_marca);
 
 ALTER TABLE solicitante
 ADD CONSTRAINT fk_apoderado 
@@ -95,12 +93,16 @@ DE QUE EN EL ARCHIVO EXCEL ESTE ATRIBUTO NO PUEDE SER NULO
 */
 
 ALTER TABLE marca
-ADD CONSTRAINT marca_sd_unique UNIQUE (id_marca, signo_distintivo);
+ADD CONSTRAINT chk_tipo_marca CHECK (
+    tipo IN ('MP','NC','MS', 'DC', 'MC','DO','LC')
+),
+ADD CONSTRAINT chk_clase_internacional CHECK (
+    clase >= 0 OR clase <= 47
+);
 
 ALTER TABLE signo_distintivo
-ADD CONSTRAINT chk_tipo_sd CHECK (tipo IN ('denominativo', 'mixto', 'gráfico')),
-ADD CONSTRAINT chk_tipo_denominativo CHECK (tipo='denominativo' AND nombre IS NOT NULL),
-ADD CONSTRAINT chk_tipo_mixto CHECK ((tipo='mixto' OR tipo='gráfico') AND descripción IS NOT NULL AND imagen_correspondiente IS NOT NULL);
+ADD CONSTRAINT chk_tipo_sd CHECK (tipo IN ('denominativa', 'mixta', 'grafica')),
+ADD CONSTRAINT marca_sd_unique UNIQUE (id_sd, marca);
 
 ALTER TABLE recaudos_solicitud
 ADD CONSTRAINT fk_solicitud FOREIGN KEY (solicitud) REFERENCES solicitud (número_de_solicitud),
