@@ -9,20 +9,23 @@ proy2_tables.sql.
 */
 
 ALTER TABLE solicitud
-ADD CONSTRAINT chk_numero_de_tramite CHECK (numero_de_tramite ~ '^[0-9]{6}$'),
-ADD CONSTRAINT chk_numero_de_referencia CHECK (numero_de_referencia ~ '^[0-9]{6}$'),
-ADD CONSTRAINT chk_condicion CHECK (condicion IN ('en proceso', 'rechazada', 'aprobada')),
-ADD CONSTRAINT fk_prioridad_extranjera FOREIGN KEY (prioridad_extranjera, pais)
-    REFERENCES prioridad_extranjera (numero_de_prioridad, fk_pais),
+ADD CONSTRAINT chk_numero_de_tramite CHECK (número_de_trámite ~ '^[0-9]{6}$'),
+ADD CONSTRAINT chk_numero_de_referencia CHECK (número_de_referencia ~ '^[0-9]{6}$'),
+ADD CONSTRAINT chk_condicion CHECK (condición IN ('en proceso', 'rechazada', 'aprobada')),
+ADD CONSTRAINT fk_prioridad_extranjera FOREIGN KEY (prioridad_extranjera, país)
+    REFERENCES prioridad_extranjera (número_de_prioridad, país),
 
-ADD CONSTRAINT fk_marca FOREIGN KEY (fk_marca) REFERENCES marca (id_marca),
-ADD CONSTRAINT fk_solicitante FOREIGN KEY (fk_solicitante) REFERENCES solicitante (id_solicitante);
+ADD CONSTRAINT fk_marca FOREIGN KEY (marca) REFERENCES marca (id_marca),
+ADD CONSTRAINT fk_solicitante FOREIGN KEY (solicitante) REFERENCES solicitante (id_solicitante);
 
 ALTER TABLE solicitante
 ADD CONSTRAINT fk_apoderado 
-    FOREIGN KEY (fk_apoderado) REFERENCES persona_natural (documento_de_identificacion),
+    FOREIGN KEY (num_agente) REFERENCES apoderado (número_de_agente),
 ADD CONSTRAINT fk_nacionalidad 
-    FOREIGN KEY (fk_nacionalidad) REFERENCES pais (nombre);
+    FOREIGN KEY (país_de_nacionalidad) REFERENCES país (nombre),
+ADD CONSTRAINT fk_país_domicilio
+    FOREIGN KEY (país_de_domicilio) REFERENCES país (nombre);
+
 
 /*
 Agrega las llaves foráneas a persona_natural y las siguientes restricciones:
@@ -36,14 +39,14 @@ debido al orden de definición de las tablas.
 */
 
 ALTER TABLE persona_natural
-ADD CONSTRAINT fk_poderdante FOREIGN KEY (fk_poderdante) REFERENCES persona_natural (documento_de_identificacion),
-ADD COLUMN fk_solicitante INTEGER NOT NULL,
-ADD CONSTRAINT fk_solicitante FOREIGN KEY (fk_solicitante) 
+ADD COLUMN solicitante INTEGER,
+ADD CONSTRAINT fk_solicitante FOREIGN KEY (solicitante) 
     REFERENCES solicitante (id_solicitante),
-ADD CONSTRAINT chk_documento_de_identificacion CHECK (documento_de_identificacion ~* '^[v,e,p]-[0-9]*$'),
-ADD CONSTRAINT chk_correo_electronico CHECK (correo_electronico ~ '%@%.%'),
-ADD CONSTRAINT chk_es_apoderado CHECK (es_apoderado IN ('false', 'true')),
-ADD CONSTRAINT chk_apoderado_representa CHECK (es_apoderado='false' AND fk_poderdante IS NULL);
+ADD CONSTRAINT chk_documento_de_identificación CHECK (documento_de_identificación ~* '^[v,e,p]-[0-9]*$' OR documento_de_identificación ~ '^VACIO*');
+
+ALTER TABLE apoderado
+ADD CONSTRAINT fk_país_domicilio FOREIGN KEY (país_de_domicilio) REFERENCES país(nombre),
+ADD CONSTRAINT fk_país_nacionalidad FOREIGN KEY (país_de_nacionalidad) REFERENCES país(nombre);
 
 /*
 Agrega las llaves foráneas a persona_juridica y las siguientes restricciones:
@@ -54,25 +57,26 @@ en determinado conjunto
 
 */
 
-ALTER TABLE persona_juridica
-ADD CONSTRAINT chk_rif CHECK (rif ~* '^[c,e,g,j,p,v]-[0-9]*$'),
+ALTER TABLE persona_jurídica
+ADD CONSTRAINT chk_rif CHECK (rif ~* '^[c,e,g,j,p,v]-[0-9]*$' OR rif ~ '^VACIO*'),
 ADD CONSTRAINT chk_tipo_juridico CHECK(
-    tipo_juridico ~* 'PÚBLICO' OR
-    tipo_juridico ~* 'PUBLICO' OR
-    tipo_juridico ~* 'PRIVADO' OR
-    tipo_juridico ~* 'ASOCIACIÓN DE PROPIEDAD COLECTIVA' OR
-    tipo_juridico ~* 'ASOCIACION DE PROPIEDAD COLECTIVA'
+    tipo_jurídico ~* 'PÚBLICO' OR
+    tipo_jurídico ~* 'PUBLICO' OR
+    tipo_jurídico ~* 'PRIVADO' OR
+    tipo_jurídico ~* 'ASOCIACIÓN DE PROPIEDAD COLECTIVA' OR
+    tipo_jurídico ~* 'ASOCIACION DE PROPIEDAD COLECTIVA' OR
+    tipo_jurídico ~ '^VACIO*'
 ),
 ADD CONSTRAINT chk_tipo_empresa CHECK(
-    tipo_juridico ~* 'publico' AND tipo_empresa IN (
+    tipo_empresa ~* 'publico' AND tipo_empresa IN (
         'estatal', 
         'mixta 51% o más', 
         'mixta 50% o menos'
         ) OR
-    tipo_juridico ~* 'privado' AND tipo_empresa IN (
+    tipo_empresa ~* 'privado' AND tipo_empresa IN (
         'nacional', 
         'extranjera') OR
-    tipo_juridico ~* 'asociacion de propiedad colectiva' AND tipo_empresa IN (
+    tipo_empresa ~* 'asociacion de propiedad colectiva' AND tipo_empresa IN (
         'empresa de propiedad social directa comunal', 
         'cooperativa', 
         'empresa de propiedad social indirecta comunal', 
@@ -80,7 +84,8 @@ ADD CONSTRAINT chk_tipo_empresa CHECK(
         'unidad productiva familiar', 
         'comuna',
         'conglomerado',
-        'grupo de intercambio solidario')
+        'grupo de intercambio solidario') OR
+    tipo_empresa ~ '^VACIO*'
 );
 
 /*
@@ -90,15 +95,13 @@ DE QUE EN EL ARCHIVO EXCEL ESTE ATRIBUTO NO PUEDE SER NULO
 */
 
 ALTER TABLE marca
-ADD CONSTRAINT marca_sd_unique UNIQUE (id_marca, fk_sd);
+ADD CONSTRAINT marca_sd_unique UNIQUE (id_marca, signo_distintivo);
 
 ALTER TABLE signo_distintivo
 ADD CONSTRAINT chk_tipo_sd CHECK (tipo IN ('denominativo', 'mixto', 'gráfico')),
-ADD CONSTRAINT chk_tipo_denominativo CHECK (tipo='denominativo') AND nombre IS NOT NULL,
-ADD CONSTRAINT chk_tipo_mixto CHECK 
-    (tipo='mixto' OR tipo='gráfico') AND descripcion IS NOT NULL 
-    AND imagen_correspondiente IS NOT NULL;
+ADD CONSTRAINT chk_tipo_denominativo CHECK (tipo='denominativo' AND nombre IS NOT NULL),
+ADD CONSTRAINT chk_tipo_mixto CHECK ((tipo='mixto' OR tipo='gráfico') AND descripción IS NOT NULL AND imagen_correspondiente IS NOT NULL);
 
 ALTER TABLE recaudos_solicitud
-ADD CONSTRAINT fk_solicitud FOREIGN KEY (fk_solicitud) REFERENCES solicitud (numero_de_solicitud),
-ADD CONSTRAINT fk_recaudo FOREIGN KEY (fk_recaudo) REFERENCES recaudos (id_recaudo);
+ADD CONSTRAINT fk_solicitud FOREIGN KEY (solicitud) REFERENCES solicitud (número_de_solicitud),
+ADD CONSTRAINT fk_recaudo FOREIGN KEY (recaudo) REFERENCES recaudos (id_recaudo);
