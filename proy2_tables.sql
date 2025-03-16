@@ -86,6 +86,7 @@ CREATE TABLE persona_natural(
 CREATE TABLE apoderado(
     número_de_agente VARCHAR(100) PRIMARY KEY,
     número_de_poder VARCHAR(100),
+    fecha_de_presentacion DATE DEFAULT NULL,
     nombre VARCHAR(100) NOT NULL,
     documento_de_identificación VARCHAR(100) DEFAULT CONCAT('VACIO', nextval('id_seq')),
     domicilio TEXT,
@@ -141,6 +142,8 @@ CREATE TABLE solicitud (
 );
 
 CREATE TABLE solicitud_solicitante ();
+
+CREATE TABLE solicitud_prioridad();
 
 CREATE TABLE recaudos (
     id_recaudo BIGSERIAL PRIMARY KEY,

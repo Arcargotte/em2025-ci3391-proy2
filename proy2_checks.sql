@@ -127,3 +127,8 @@ ALTER TABLE recaudos_solicitud
 ADD COLUMN recaudo INTEGER REFERENCES recaudos (id_recaudo),
 ADD COLUMN solicitud CHAR(11) REFERENCES solicitud (número_de_solicitud),
 ADD CONSTRAINT pk_recaudos_solicitud PRIMARY KEY (recaudo, solicitud);
+
+ALTER TABLE solicitud_prioridad
+ADD COLUMN solicitud CHAR(11) REFERENCES solicitud (número_de_solicitud),
+ADD COLUMN prioridad VARCHAR(100) REFERENCES prioridad_extranjera (número_de_prioridad),
+ADD CONSTRAINT pk_solicitud_prioridad PRIMARY KEY (solicitud, prioridad);

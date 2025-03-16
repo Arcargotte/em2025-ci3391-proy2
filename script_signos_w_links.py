@@ -60,7 +60,6 @@ def xlsx_to_sql(sql_file, table_name):
             else:
                 f.write("),\n")
 
-
 if __name__ == "__main__":
     sql_file = "proy2_insert_signo_w_link.sql"
     table_name = "signo_distintivo"

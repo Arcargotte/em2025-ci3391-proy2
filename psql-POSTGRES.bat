@@ -1,5 +1,5 @@
 @echo off
-chcp 1252
+chcp 65001
 SET server=localhost
 SET database=postgres
 SET port=5432
