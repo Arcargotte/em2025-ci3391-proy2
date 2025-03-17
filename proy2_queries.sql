@@ -102,9 +102,9 @@ ORDER BY
 
 -- /*Sentencia 5:Por mes, la lista de solicitantes que no presentaron marcas durante ese mes. */
 -- Adaptación considerando que solicitante y solicitud están relacionados a través de solicitud_solicitante
--- WITH meses AS (
-    SELECT DISTINCT TO_CHAR(fecha_solicitud, 'Mon-YYYY') AS mes
-    FROM solicitud
+WITH meses AS (
+SELECT DISTINCT TO_CHAR(fecha_solicitud, 'Mon-YYYY') AS mes
+FROM solicitud
 ),
 solicitantes AS (
     SELECT DISTINCT s.id_solicitante, s.país_de_domicilio
