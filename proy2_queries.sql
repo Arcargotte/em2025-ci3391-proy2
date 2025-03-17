@@ -108,21 +108,23 @@ WITH meses AS (
 ),
 solicitantes AS (
     SELECT DISTINCT 
-        s.id_solicitante,
-        COALESCE(pn.nombre || ' ' || pn.apellido, pj.nombre_empresa) AS solicitante,
+        s.id_solicitante, 
+        COALESCE(pn.nombre, pj.razón_social) AS solicitante_nombre,
         s.país_de_domicilio
     FROM solicitante s
-    LEFT JOIN persona_natural pn ON s.id_solicitante = pn.solicitante
+    LEFT JOIN persona_natural pn ON s.documento_de_identificación = pn.documento_de_identificación
     LEFT JOIN persona_jurídica pj ON s.id_solicitante = pj.solicitante
 ),
 solicitudes_por_mes AS (
-    SELECT DISTINCT TO_CHAR(s.fecha_solicitud, 'Mon-YYYY') AS mes, ss.fk_solicitante
+    SELECT DISTINCT 
+        TO_CHAR(s.fecha_solicitud, 'Mon-YYYY') AS mes, 
+        ss.fk_solicitante
     FROM solicitud s
     JOIN solicitud_solicitante ss ON s.número_de_solicitud = ss.fk_solicitud
 )
 SELECT 
     m.mes AS "Año Mes",
-    sol.solicitante AS "Solicitante",
+    sol.solicitante_nombre AS "Solicitante",
     sol.país_de_domicilio AS "País de domicilio"
 FROM 
     meses m
@@ -134,8 +136,8 @@ LEFT JOIN
 WHERE 
     spm.fk_solicitante IS NULL
 ORDER BY 
-    TO_DATE('01-' || m.mes, 'DD-Mon-YYYY') ASC, 
-    sol.solicitante ASC;
+    TO_DATE(m.mes, 'Mon-YYYY') ASC, sol.solicitante_nombre ASC;
+
 
 
 
