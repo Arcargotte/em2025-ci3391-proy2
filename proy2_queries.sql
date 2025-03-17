@@ -109,11 +109,13 @@ WITH meses AS (
 solicitantes AS (
     SELECT DISTINCT 
         s.id_solicitante, 
-        COALESCE(pn.nombre, pj.razón_social) AS solicitante_nombre,
+        COALESCE(pn.nombre, pj.razón_social, 'Desconocido') AS solicitante_nombre,
         s.país_de_domicilio
     FROM solicitante s
-    LEFT JOIN persona_natural pn ON s.documento_de_identificación = pn.documento_de_identificación
-    LEFT JOIN persona_jurídica pj ON s.id_solicitante = pj.solicitante
+    LEFT JOIN persona_natural pn 
+        ON TRIM(s.documento_de_identificación) = TRIM(pn.documento_de_identificación)
+    LEFT JOIN persona_jurídica pj 
+        ON s.id_solicitante = pj.solicitante
 ),
 solicitudes_por_mes AS (
     SELECT DISTINCT 
@@ -121,22 +123,26 @@ solicitudes_por_mes AS (
         ss.fk_solicitante
     FROM solicitud s
     JOIN solicitud_solicitante ss ON s.número_de_solicitud = ss.fk_solicitud
+),
+solicitantes_sin_solicitud AS (
+    SELECT 
+        m.mes AS "Año Mes",
+        sol.solicitante_nombre AS "Solicitante",
+        sol.país_de_domicilio AS "País de domicilio"
+    FROM meses m
+    CROSS JOIN solicitantes sol
+    LEFT JOIN solicitudes_por_mes spm 
+        ON m.mes = spm.mes AND sol.id_solicitante = spm.fk_solicitante
+    WHERE spm.fk_solicitante IS NULL
 )
 SELECT 
-    m.mes AS "Año Mes",
-    sol.solicitante_nombre AS "Solicitante",
-    sol.país_de_domicilio AS "País de domicilio"
-FROM 
-    meses m
-CROSS JOIN 
-    solicitantes sol
-LEFT JOIN 
-    solicitudes_por_mes spm 
-    ON m.mes = spm.mes AND sol.id_solicitante = spm.fk_solicitante
-WHERE 
-    spm.fk_solicitante IS NULL
-ORDER BY 
-    TO_DATE(m.mes, 'Mon-YYYY') ASC, sol.solicitante_nombre ASC;
+    "Año Mes",
+    "Solicitante",
+    "País de domicilio",
+    ROW_NUMBER() OVER (PARTITION BY "Año Mes" ORDER BY "Solicitante") AS "N°"
+FROM solicitantes_sin_solicitud
+ORDER BY TO_DATE("Año Mes", 'Mon-YYYY') ASC, "Solicitante" ASC;
+
 
 
 
