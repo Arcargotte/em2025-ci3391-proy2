@@ -8,10 +8,11 @@ definidas en el esquema de la base de datos e implementadas en el script
 proy2_tables.sql.
 */
 
-
+-- Restricción de clave foránea en prioridad_extranjera para país.
 ALTER TABLE prioridad_extranjera
 ADD CONSTRAINT fk_país FOREIGN KEY (país) REFERENCES país (nombre);
 
+-- Restricciones en la tabla solicitud
 ALTER TABLE solicitud
 ADD CONSTRAINT chk_numero_de_tramite CHECK (número_de_trámite ~ '^[0-9]{6}$'),
 ADD CONSTRAINT chk_numero_de_referencia CHECK (número_de_referencia ~ '^[0-9]{6}$'),
@@ -20,6 +21,7 @@ ADD CONSTRAINT fk_prioridad_extranjera FOREIGN KEY (prioridad_extranjera)
     REFERENCES prioridad_extranjera (número_de_prioridad),
 ADD CONSTRAINT fk_marca FOREIGN KEY (marca) REFERENCES marca (id_marca);
 
+-- Restricciones en la tabla solicitante
 ALTER TABLE solicitante
 ADD CONSTRAINT fk_apoderado 
     FOREIGN KEY (num_agente) REFERENCES apoderado (número_de_agente),
@@ -45,6 +47,7 @@ ADD COLUMN solicitante INTEGER,
 ADD CONSTRAINT fk_solicitante FOREIGN KEY (solicitante) 
     REFERENCES solicitante (id_solicitante);
 
+-- Restricciones en apoderado
 ALTER TABLE apoderado
 ADD CONSTRAINT fk_país_domicilio FOREIGN KEY (país_de_domicilio) REFERENCES país(nombre),
 ADD CONSTRAINT fk_país_nacionalidad FOREIGN KEY (país_de_nacionalidad) REFERENCES país(nombre);
@@ -89,6 +92,7 @@ ADD CONSTRAINT chk_tipo_empresa CHECK(
 ),
 ADD CONSTRAINT fk_solicitante FOREIGN KEY (solicitante) REFERENCES solicitante (id_solicitante);
 
+-- Agrega llaves foráneas y clave primaria en solicitud_solicitante
 ALTER TABLE solicitud_solicitante
 ADD COLUMN fk_solicitud CHAR(11) REFERENCES solicitud (número_de_solicitud),
 ADD COLUMN fk_solicitante INTEGER REFERENCES solicitante (id_solicitante),
@@ -101,6 +105,12 @@ LOS VALORES DE LOS ATRIBUTOS TIPO EN PUBLICO, TENEMOS LA LIMITACION
 DE QUE EN EL ARCHIVO EXCEL ESTE ATRIBUTO NO PUEDE SER NULO
 */
 
+/*
+Restricciones en marca:
+1. Validación de valores permitidos en tipo.
+2. Validación de rango de clase internacional.
+3. Validación condicional de lema comercial.
+*/
 ALTER TABLE marca
 ADD CONSTRAINT chk_tipo_marca CHECK (
     tipo IN ('MP','NC','MS', 'DC', 'MC','DO','LC')
@@ -112,6 +122,7 @@ ADD CONSTRAINT chk_lema_comercial CHECK(
     numero_de_la_solicitud is NULL OR aplicar_a_la_marca is NULL OR tipo != 'LC' --Verifica que si el tipo de marca no es LC, entonces el numero de solicitud y aplicar a la marca son NULL
 );
 
+-- Restricciones en signo_distintivo
 ALTER TABLE signo_distintivo
 ADD CONSTRAINT chk_tipo_sd CHECK (tipo IN ('denominativa', 'mixta', 'grafica')),
 ADD CONSTRAINT marca_sd_unique UNIQUE (id_sd, marca),
@@ -121,10 +132,13 @@ ADD CONSTRAINT chk_sd_denominativo CHECK(
 ADD CONSTRAINT fk_sd FOREIGN KEY (marca) REFERENCES marca(id_marca)
 ;
 
+-- Agrega llaves foráneas y clave primaria en recaudos_solicitud
 ALTER TABLE recaudos_solicitud
 ADD COLUMN recaudo INTEGER REFERENCES recaudos (id_recaudo),
 ADD COLUMN solicitud CHAR(11) REFERENCES solicitud (número_de_solicitud),
 ADD CONSTRAINT pk_recaudos_solicitud PRIMARY KEY (recaudo, solicitud);
+
+
 
 ALTER TABLE solicitud_prioridad
 ADD COLUMN solicitud CHAR(11) REFERENCES solicitud (número_de_solicitud),
