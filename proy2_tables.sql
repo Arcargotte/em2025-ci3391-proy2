@@ -80,7 +80,7 @@ LA LLAVE FORANEA SOLICITANTE_NATURAL DEBE SER IMPLEMENTADA UNA VEZ CREADA LA TAB
 
 CREATE TABLE persona_natural(
     nombre VARCHAR(100) NOT NULL,
-    documento_de_identificación VARCHAR(100) PRIMARY KEY DEFAULT CONCAT('VACIO', nextval('id_seq'))    
+    id_persona_natural BIGSERIAL PRIMARY KEY
 );
 
 CREATE TABLE apoderado(
@@ -122,7 +122,7 @@ AGREGAR RESTRICCION DE TIPO_EMPRESA EN FUNCION DE TIPO_JURIDICO
 */
 
 CREATE TABLE persona_jurídica(
-    rif CHAR(12) PRIMARY KEY DEFAULT CONCAT('VACIO', nextval('id_seq')),
+    id_persona_jurídica BIGSERIAL PRIMARY KEY,
     razón_social VARCHAR(255) NOT NULL,
     tipo_jurídico VARCHAR(33) DEFAULT CONCAT('VACIO', nextval('id_seq')),
     tipo_empresa VARCHAR(100) DEFAULT CONCAT('VACIO', nextval('id_seq')),

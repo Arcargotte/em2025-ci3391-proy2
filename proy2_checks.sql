@@ -43,8 +43,7 @@ debido al orden de definición de las tablas.
 ALTER TABLE persona_natural
 ADD COLUMN solicitante INTEGER,
 ADD CONSTRAINT fk_solicitante FOREIGN KEY (solicitante) 
-    REFERENCES solicitante (id_solicitante),
-ADD CONSTRAINT chk_documento_de_identificación CHECK (documento_de_identificación ~* '^[v,e,p]-[0-9]*$' OR documento_de_identificación ~ '^VACIO*');
+    REFERENCES solicitante (id_solicitante);
 
 ALTER TABLE apoderado
 ADD CONSTRAINT fk_país_domicilio FOREIGN KEY (país_de_domicilio) REFERENCES país(nombre),
@@ -60,7 +59,6 @@ en determinado conjunto
 */
 
 ALTER TABLE persona_jurídica
-ADD CONSTRAINT chk_rif CHECK (rif ~* '^[c,e,g,j,p,v]-[0-9]*$' OR rif ~ '^VACIO*'),
 ADD CONSTRAINT chk_tipo_juridico CHECK(
     tipo_jurídico ~* 'PÚBLICO' OR
     tipo_jurídico ~* 'PUBLICO' OR

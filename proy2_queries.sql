@@ -102,49 +102,55 @@
 
 -- /*Sentencia 5:Por mes, la lista de solicitantes que no presentaron marcas durante ese mes. */
 -- Adaptación considerando que solicitante y solicitud están relacionados a través de solicitud_solicitante
-WITH meses AS (
-    SELECT DISTINCT TO_CHAR(fecha_solicitud, 'Mon-YYYY') AS mes
-    FROM solicitud
-),
-solicitantes AS (
-    SELECT DISTINCT 
-        s.id_solicitante, 
-        COALESCE(pn.nombre, pj.razón_social, 'Desconocido') AS solicitante_nombre,
-        s.país_de_domicilio
-    FROM solicitante s
-    LEFT JOIN persona_natural pn 
-        ON TRIM(s.documento_de_identificación) = TRIM(pn.documento_de_identificación)
-    LEFT JOIN persona_jurídica pj 
-        ON s.id_solicitante = pj.solicitante
-),
-solicitudes_por_mes AS (
-    SELECT DISTINCT 
-        TO_CHAR(s.fecha_solicitud, 'Mon-YYYY') AS mes, 
-        ss.fk_solicitante
-    FROM solicitud s
-    JOIN solicitud_solicitante ss ON s.número_de_solicitud = ss.fk_solicitud
-),
-solicitantes_sin_solicitud AS (
-    SELECT 
-        m.mes AS "Año Mes",
-        sol.solicitante_nombre AS "Solicitante",
-        sol.país_de_domicilio AS "País de domicilio"
-    FROM meses m
-    CROSS JOIN solicitantes sol
-    LEFT JOIN solicitudes_por_mes spm 
-        ON m.mes = spm.mes AND sol.id_solicitante = spm.fk_solicitante
-    WHERE spm.fk_solicitante IS NULL
-)
+-- WITH meses AS (
+--     SELECT DISTINCT TO_CHAR(fecha_solicitud, 'Mon-YYYY') AS mes
+--     FROM solicitud
+-- ),
+-- solicitantes AS (
+--     SELECT DISTINCT 
+--         s.id_solicitante, 
+--         COALESCE(pn.nombre, pj.razón_social, 'Desconocido') AS solicitante_nombre,
+--         s.país_de_domicilio
+--     FROM solicitante s
+--     LEFT JOIN persona_natural pn 
+--         ON TRIM(s.documento_de_identificación) = TRIM(pn.documento_de_identificación)
+--     LEFT JOIN persona_jurídica pj 
+--         ON s.id_solicitante = pj.solicitante
+-- ),
+-- solicitudes_por_mes AS (
+--     SELECT DISTINCT 
+--         TO_CHAR(s.fecha_solicitud, 'Mon-YYYY') AS mes, 
+--         ss.fk_solicitante
+--     FROM solicitud s
+--     JOIN solicitud_solicitante ss ON s.número_de_solicitud = ss.fk_solicitud
+-- ),
+-- solicitantes_sin_solicitud AS (
+--     SELECT 
+--         m.mes AS "Año Mes",
+--         sol.solicitante_nombre AS "Solicitante",
+--         sol.país_de_domicilio AS "País de domicilio"
+--     FROM meses m
+--     CROSS JOIN solicitantes sol
+--     LEFT JOIN solicitudes_por_mes spm 
+--         ON m.mes = spm.mes AND sol.id_solicitante = spm.fk_solicitante
+--     WHERE spm.fk_solicitante IS NULL
+-- )
+-- SELECT 
+--     "Año Mes",
+--     "Solicitante",
+--     "País de domicilio",
+--     ROW_NUMBER() OVER (PARTITION BY "Año Mes" ORDER BY "Solicitante") AS "N°"
+-- FROM solicitantes_sin_solicitud
+-- ORDER BY TO_DATE("Año Mes", 'Mon-YYYY') ASC, "Solicitante" ASC;
+
+
 SELECT 
-    "Año Mes",
-    "Solicitante",
-    "País de domicilio",
-    ROW_NUMBER() OVER (PARTITION BY "Año Mes" ORDER BY "Solicitante") AS "N°"
-FROM solicitantes_sin_solicitud
-ORDER BY TO_DATE("Año Mes", 'Mon-YYYY') ASC, "Solicitante" ASC;
-
-
-
+    s.documento_de_identificación AS "Solicitante Doc",
+    pn.documento_de_identificación AS "Persona Natural Doc"
+FROM solicitante s
+LEFT JOIN persona_natural pn 
+    ON s.documento_de_identificación = pn.documento_de_identificación
+WHERE pn.documento_de_identificación IS NULL;
 
 
 /*solicitud_solicitante se usa como tabla intermedia entre solicitud y solicitante.
