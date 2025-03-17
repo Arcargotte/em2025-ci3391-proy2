@@ -1,21 +1,22 @@
--- /*Sentencia 1: Por mes, presentar el número de solicitudes de marcas por tipo de signo distintivo (denominativa, gráfica, mixta). */
+-- Sentencia 1: Cantidad de solicitudes de marcas por tipo de signo distintivo en cada mes
+-- Se agrupan las solicitudes por mes y se cuenta cuántas corresponden a cada tipo de signo distintivo.
 SELECT 
-    TO_CHAR(s.fecha_solicitud, 'Mon-YYYY') AS mes,
+    TO_CHAR(s.fecha_solicitud, 'Mon-YYYY') AS mes, -- Formatea la fecha para agrupar por mes y año
     SUM(CASE WHEN sd.tipo = 'denominativa' THEN 1 ELSE 0 END) AS "Cantidad signo denominativa",
     SUM(CASE WHEN sd.tipo = 'grafica' THEN 1 ELSE 0 END) AS "Cantidad signo grafica",
     SUM(CASE WHEN sd.tipo = 'mixta' THEN 1 ELSE 0 END) AS "Cantidad signo mixta"
 FROM 
     solicitud s
 JOIN 
-    signo_distintivo sd ON s.marca = sd.marca
+    signo_distintivo sd ON s.marca = sd.marca -- Relaciona la solicitud con el signo distintivo de la marca
 GROUP BY 
     TO_CHAR(s.fecha_solicitud, 'Mon-YYYY')
 ORDER BY 
-    MIN(s.fecha_solicitud) ASC;
+    MIN(s.fecha_solicitud) ASC; -- Ordena los resultados cronológicament
 
 
--- /*Sentencia 2:Por mes, presentar el top 3 de los países de domicilio de solicitantes con mayor número de solicitudes. */
-
+-- Sentencia 2: Top 3 de países con más solicitudes por mes
+-- Se obtiene la cantidad de solicitudes por país de domicilio y se seleccionan los tres con mayor volumen.
 WITH solicitudes_por_pais AS (
     SELECT 
         TO_CHAR(s.fecha_solicitud, 'Mon-YYYY') AS mes,
@@ -51,11 +52,10 @@ WHERE
 GROUP BY 
     mes
 ORDER BY 
-    TO_DATE(mes, 'Mon-YYYY') ASC;
+    TO_DATE(mes, 'Mon-YYYY') ASC; -- Convierte el mes a fecha para ordenarlo correctamente
 
--- /*Sentencia 3:Detalles de los números de solicitud con sus prioridades extranjeras (PE) */
--- /*Adaptación considerando la relación entre solicitud y prioridad_extranjera,
--- que ahora se maneja a través de solicitud_prioridad*/
+-- Sentencia 3: Detalle de solicitudes con prioridad extranjera (PE)
+-- Se listan las solicitudes junto con la información de sus prioridades extranjeras, si las tienen.
 
 SELECT 
     s.número_de_solicitud AS "Solicitud número",
@@ -76,8 +76,7 @@ ORDER BY
 -- /*Se usa solicitud_prioridad como tabla intermedia en la relación solicitud - prioridad_extranjera.
 -- Se ajustan los nombres de columnas según proy2_tables.sql*/
 
--- -- /*Sentencia 4:pero filtrando solamente las filas en donde la fecha de la PE sea mayor o igual que la fecha de la
--- -- solicitud. */
+-- Sentencia 4: Igual que la Sentencia 3, pero filtrando solo prioridades extranjeras con fecha mayor o igual a la solicitud
 SELECT 
     s.número_de_solicitud AS "Solicitud número",
     TO_CHAR(s.fecha_solicitud, 'DD-Mon-YYYY') AS "Solicitud fecha",
@@ -91,17 +90,18 @@ JOIN
 JOIN 
     prioridad_extranjera pe ON sp.prioridad = pe.número_de_prioridad
 WHERE 
-    pe.fecha_de_prioridad >= s.fecha_solicitud
+    pe.fecha_de_prioridad >= s.fecha_solicitud -- Solo se incluyen prioridades extranjeras con fecha igual o posterior a la solicitud
+ORDER BY 
 ORDER BY 
     s.número_de_solicitud ASC, 
     pe.fecha_de_prioridad ASC;
 
--- --Igual que la Sentencia 3, pero agregando WHERE pe.fecha_de_prioridad >= s.fecha_solicitud.
 
 
 
--- /*Sentencia 5:Por mes, la lista de solicitantes que no presentaron marcas durante ese mes. */
--- Adaptación considerando que solicitante y solicitud están relacionados a través de solicitud_solicitante
+
+-- Sentencia 5: Solicitantes que no presentaron solicitudes en un mes dado
+-- Se listan los solicitantes que no tienen registros de solicitud en el mes analizado.
 
 
 
